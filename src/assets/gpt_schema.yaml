@@ -1,0 +1,191 @@
+openapi: 3.0.0
+info:
+  title: TaskQuester
+  description: An API for managing categories, events, and tasks.
+  version: 1.0.0
+servers:
+  - url: http://38.180.110.42
+    description: Tasker server
+
+paths:
+  /categories:
+    get:
+      operationId: getCategories
+      summary: Get a list of categories.
+      responses:
+        '200':
+          description: An array of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /events:
+    get:
+      operationId: getEvents
+      summary: Get a list of events
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: is_completed
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: category_ids
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: An object containing event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+    post:
+      operationId: createEvent
+      summary: Create a new event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category_id:
+                  type: integer
+                start_date:
+                  type: string
+                end_date:
+                  type: string
+      responses:
+        '201':
+          description: Event created
+
+  /tasks:
+    get:
+      operationId: getTasks
+      summary: Get a list of tasks
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: is_completed
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: category_ids
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: An array of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      operationId: createTask
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category_id:
+                  type: integer
+                start_date:
+                  type: string
+      responses:
+        '201':
+          description: Task created
+
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+        name:
+          type: string
+
+    Event:
+      type: object
+      properties:
+        title:
+          type: string
+        id:
+          type: integer
+        start_datetime:
+          type: string
+        is_completed:
+          type: boolean
+        created_at:
+          type: string
+        event_id:
+          type: string
+        description:
+          type: string
+        end_datetime:
+          type: string
+        updated_at:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+
+    Task:
+      type: object
+      properties:
+        due_at:
+          type: string
+        id:
+          type: integer
+        task_id:
+          type: string
+        completed_at:
+          type: string
+        created_at:
+          type: string
+        title:
+          type: string
+        is_completed:
+          type: boolean
+        is_hidden:
+          type: boolean
+        updated_at:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'

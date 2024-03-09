@@ -123,7 +123,7 @@ def create_fastapi_app():
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get("/tasks", tags=["Задачи"])
-    async def get_tasks(start_date: str, is_completed: Union[str, None] = None,
+    async def get_tasks(start_date: str, end_date: Union[str, None], is_completed: Union[str, None] = None,
                          category_ids: Union[str, None] = None):
         start_date, end_date = parse_date(start_date)
 
@@ -139,6 +139,10 @@ def create_fastapi_app():
         if start_date is not None:
             start_date_obj = parse(start_date).strftime("%Y-%m-%d")
             conditions.append(TasksOrm.due_at >= start_date_obj)
+
+        if end_date is not None:
+            end_date_obj = parse(end_date).strftime("%Y-%m-%d")
+            conditions.append(TasksOrm.due_at <= end_date_obj)
 
         res = await ASyncORM.query_items(TasksOrm, conditions)
 
