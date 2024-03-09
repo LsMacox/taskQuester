@@ -36,8 +36,8 @@ if __name__ == "__main__":
     asyncio.run(main())
 
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    ssl_context.load_cert_chain(settings.BASE_DIR / 'contrib' / 'cert.pem',
-                                keyfile=settings.BASE_DIR / 'contrib' / 'key.pem')
+    ssl_context.load_cert_chain(settings.BASE_DIR / 'contrib' / 'ssl' / 'cert.pem',
+                                keyfile=settings.BASE_DIR / 'contrib' / 'ssl' / 'key.pem')
 
     if "--webserver" in args:
         uvicorn.run(
