@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     GOOGLE_CALENDAR_ID: str = 'primary'
     TIMEZONE: str = 'Europe/Moscow'
     GOOGLE_TASK_LIST: str = ''
+    DEBUG: bool
 
     @property
     def DATABASE_URL_asyncmy(self):
