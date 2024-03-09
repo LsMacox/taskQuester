@@ -4,7 +4,7 @@ info:
   description: An API for managing categories, events, and tasks.
   version: 1.0.0
 servers:
-  - url: http://38.180.110.42
+  - url: https://pyboters.work
     description: Tasker server
 
 paths:
