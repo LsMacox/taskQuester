@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS taskquester;
+GRANT ALL PRIVILEGES ON taskquester.* TO 'lsmacox'@'%';
+FLUSH PRIVILEGES;
+
