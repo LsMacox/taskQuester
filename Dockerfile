@@ -7,6 +7,7 @@ WORKDIR /app
 COPY . /app
 
 EXPOSE 8000
+EXPOSE 443
 
 RUN poetry config virtualenvs.create false
 RUN poetry install --no-dev
