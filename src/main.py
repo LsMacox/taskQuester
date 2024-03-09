@@ -32,17 +32,17 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # asyncio.run(main())
 
     ssl_context = {}
-    port = 443
+    port = 8000
 
     if not settings.DEBUG:
         ssl_context = {
             "ssl_certfile": settings.BASE_DIR / 'contrib' / 'ssl' / 'cert.pem',
             "ssl_keyfile": settings.BASE_DIR / 'contrib' / 'ssl' / 'key.pem',
         }
-        port = 8000
+        port = 443
 
     if "--webserver" in args:
         uvicorn.run(
