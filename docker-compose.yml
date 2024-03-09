@@ -18,7 +18,7 @@ services:
   webserver:
     build: .
     ports:
-      - "8000:8000"
+      - "8000:80"
     command: python src/main.py --webserver
     volumes:
       - .:/app
