@@ -48,6 +48,6 @@ if __name__ == "__main__":
         uvicorn.run(
             app="services.fastapi_app:app",
             host="0.0.0.0",
-            port=port,
-            **ssl_context,
+            port=8000,
+            # **ssl_context,
         )
