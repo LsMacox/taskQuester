@@ -1,0 +1,11 @@
+{
+    "installed": {
+        "client_id": "155671842726-ea821ljh3qitkd0bfkh4o96uqg5bi1ec.apps.googleusercontent.com",
+        "project_id": "planner-416017",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret": "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",
+        "redirect_urls": ["http://localhost"]
+    }
+}

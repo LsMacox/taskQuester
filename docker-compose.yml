@@ -1,0 +1,48 @@
+version: '3'
+
+networks:
+  default:
+    name: 'taskquester'
+
+services:
+  scheduler:
+    build: .
+    command: python src/scheduler.py
+
+  seed:
+    build: .
+    command: python src/main.py --seed=category
+    depends_on:
+      - mysql
+
+  webserver:
+    build: .
+    ports:
+      - "8000:8000"
+    command: python src/main.py --webserver
+    volumes:
+      - .:/app
+    networks:
+      - default
+    depends_on:
+      - mysql
+    dns:
+      8.8.8.8
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - "MYSQL_ALLOW_EMPTY_PASSWORD=true"
+      - "MYSQL_DATABASE=taskquester"
+      - "MYSQL_USER=lsmacox"
+      - "MYSQL_PASSWORD=qwerty123"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./src/contrib/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+       - default
+
+volumes:
+  mysql-data:
