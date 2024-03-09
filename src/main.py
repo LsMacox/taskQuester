@@ -7,7 +7,6 @@ from utils.arguments import parse_arguments
 from services.google_service import authenticate
 from config import settings
 from database import async_engine
-import ssl
 
 args = parse_arguments(sys.argv)
 
@@ -35,14 +34,18 @@ async def main() -> None:
 if __name__ == "__main__":
     asyncio.run(main())
 
-    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    ssl_context.load_cert_chain(settings.BASE_DIR / 'contrib' / 'ssl' / 'cert.pem',
-                                keyfile=settings.BASE_DIR / 'contrib' / 'ssl' / 'key.pem')
+    ssl_context = {}
+
+    if not settings.DEBUG:
+        ssl_context = {
+            "ssl_certfile": settings.BASE_DIR / 'contrib' / 'ssl' / 'cert.pem',
+            "ssl_keyfile": settings.BASE_DIR / 'contrib' / 'ssl' / 'key.pem',
+        }
 
     if "--webserver" in args:
         uvicorn.run(
             app="services.fastapi_app:app",
             host="0.0.0.0",
             port=8000,
-            ssl=ssl_context
+            **ssl_context,
         )
