@@ -10,8 +10,27 @@ import services.google_service as google_service
 from dateutil.parser import parse
 import pytz
 from config import settings
+from contextlib import asynccontextmanager
 from models import EventsOrm, TasksOrm, CategoryOrm
 from sqlalchemy.orm import joinedload
+from database import sessionmanager
+from dependecies.core import DBSessionDep
+import sys
+from utils.arguments import parse_arguments
+
+
+args = parse_arguments(sys.argv)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Function that handles startup and shutdown events.
+    To understand more, read https://fastapi.tiangolo.com/advanced/events/
+    """
+    yield
+    if sessionmanager._engine is not None:
+        # Close the DB connection
+        await sessionmanager.close()
 
 
 def parse_date(start_date: str, end_date: Union[str, None] = None):
@@ -31,21 +50,22 @@ def parse_date(start_date: str, end_date: Union[str, None] = None):
 
 
 def create_fastapi_app():
-    app = FastAPI(title="FastAPI")
+    app = FastAPI(title="FastAPI", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
     )
 
     @app.on_event("startup")
-    async def startup_event():
+    async def startup_event(db_session: DBSessionDep):
         client_creds, user_creds = await google_service.authenticate()
         settings.GOOGLE_CLIENT_CREDS.update(client_creds)
         settings.GOOGLE_USER_CREDS.update(user_creds)
 
     @app.get("/categories")
-    async def get_categories():
+    async def get_categories(db_session: DBSessionDep):
         categories = await ASyncORM.query_items(
+            db_session,
             CategoryOrm,
             [CategoryOrm.parent_id != None],
             [joinedload(CategoryOrm.parent)]
@@ -59,7 +79,8 @@ def create_fastapi_app():
         return categories_dto
 
     @app.get("/events", tags=["Событии"])
-    async def get_events(start_date: str, end_date: Union[str, None] = None, is_completed: Union[str, None] = None,
+    async def get_events(db_session: DBSessionDep, start_date: str, end_date: Union[str, None] = None,
+                         is_completed: Union[str, None] = None,
                          category_ids: Union[str, None] = None):
         start_date, end_date = parse_date(start_date, end_date)
 
@@ -80,13 +101,15 @@ def create_fastapi_app():
             end_date_obj = parse(end_date).strftime("%Y-%m-%d")
             conditions.append(EventsOrm.end_datetime <= end_date_obj)
 
-        res = await ASyncORM.query_items(EventsOrm, conditions)
+        res = await ASyncORM.query_items(db_session, EventsOrm, conditions)
 
         return res
 
     @app.post("/events", tags=["Событии"])
-    async def create_event(category_id: int, start_date: str, end_date: Union[str, None] = None):
+    async def create_event(db_session: DBSessionDep, category_id: int, start_date: str,
+                           end_date: Union[str, None] = None):
         categories = await ASyncORM.query_items(
+            db_session,
             CategoryOrm,
             [CategoryOrm.id == category_id],
             [joinedload(CategoryOrm.parent)]
@@ -123,8 +146,9 @@ def create_fastapi_app():
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get("/tasks", tags=["Задачи"])
-    async def get_tasks(start_date: str, end_date: Union[str, None], is_completed: Union[str, None] = None,
-                         category_ids: Union[str, None] = None):
+    async def get_tasks(db_session: DBSessionDep, start_date: str, end_date: Union[str, None],
+                        is_completed: Union[str, None] = None,
+                        category_ids: Union[str, None] = None):
         start_date, end_date = parse_date(start_date)
 
         conditions = []
@@ -144,13 +168,14 @@ def create_fastapi_app():
             end_date_obj = parse(end_date).strftime("%Y-%m-%d")
             conditions.append(TasksOrm.due_at <= end_date_obj)
 
-        res = await ASyncORM.query_items(TasksOrm, conditions)
+        res = await ASyncORM.query_items(db_session, TasksOrm, conditions)
 
         return res
 
     @app.post("/tasks", tags=["Задачи"])
-    async def create_task(category_id: int, start_date: str):
+    async def create_task(db_session: DBSessionDep, category_id: int, start_date: str):
         categories = await ASyncORM.query_items(
+            db_session,
             CategoryOrm,
             [CategoryOrm.id == category_id],
             [joinedload(CategoryOrm.parent)]

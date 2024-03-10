@@ -6,7 +6,7 @@ import asyncio
 from config import settings
 from utils.arguments import parse_arguments
 from services.google_service import authenticate
-from database import async_engine
+from database import sessionmanager
 
 
 args = parse_arguments(sys.argv)
@@ -18,7 +18,7 @@ async def main():
     settings.GOOGLE_USER_CREDS.update(user_creds)
 
     if "--echo" in args:
-        async_engine.echo = True
+        sessionmanager._engine.echo = True
 
     if "--sync" in args:
         if args["--sync"] == "events":

@@ -23,7 +23,7 @@ async def load_credentials(file_path):
         return json.loads(content)
 
 
-async def get_credentials():
+async def get_service_credentials():
     credentials_data = await load_credentials(settings.BASE_DIR / 'assets' / 'service_account_google_cred.json')
     service_account_creds = ServiceAccountCreds(
         scopes=[
@@ -66,7 +66,6 @@ async def authenticate():
     )
 
     return client_creds, user_creds
-
 
 
 async def get_calendar_list(

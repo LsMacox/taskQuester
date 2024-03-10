@@ -1,12 +1,12 @@
 import asyncio
 import uvicorn
 from seeders.category_seeder import seed as seed_category
-from orm import ASyncORM
 import sys
 from utils.arguments import parse_arguments
 from services.google_service import authenticate
 from config import settings
-from database import async_engine
+from database import sessionmanager
+from orm import ASyncORM
 
 args = parse_arguments(sys.argv)
 
@@ -17,18 +17,16 @@ async def main() -> None:
     settings.GOOGLE_CLIENT_CREDS.update(client_creds)
     settings.GOOGLE_USER_CREDS.update(user_creds)
 
-    if "--echo" in args:
-        async_engine.echo = True
+    async with sessionmanager._engine.begin() as db_session:
+        if "--create-tables" in args:
+            await ASyncORM.create_tables(db_session)
+        if "--drop-tables" in args:
+            await ASyncORM.drop_tables(db_session)
 
     if "--seed" in args:
         if args["--seed"] == "category":
             await seed_category()
             raise SystemExit
-
-    if "--drop" in args:
-        await ASyncORM.drop_tables()
-
-    await ASyncORM.create_tables()
 
 
 if __name__ == "__main__":
