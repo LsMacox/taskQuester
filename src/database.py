@@ -1,6 +1,6 @@
 from typing_extensions import Annotated
-from sqlalchemy import text, URL, String
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import text, URL, String, create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from config import settings
 import contextlib
 from typing import Any, AsyncIterator, Dict
@@ -11,6 +11,11 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+sync_engine = create_engine(
+    url=settings.DATABASE_URL_pymysql,
+)
+
+session_factory = sessionmaker(sync_engine)
 
 class DatabaseSessionManager:
     def __init__(self, host: str, engine_kwargs: Dict[str, Any] = {}):

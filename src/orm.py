@@ -36,7 +36,9 @@ class ASyncORM:
         for condition in conditions:
             query = query.where(condition)
 
-        return (await db_session.scalars(query)).all()
+        res = await db_session.scalars(query)
+
+        return res.all()
 
     @staticmethod
     async def get_category_by(db_session: AsyncSession, category_id: int, name: str = None, parent_id: int = None):

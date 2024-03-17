@@ -141,24 +141,18 @@ components:
     Event:
       type: object
       properties:
-        title:
-          type: string
         id:
           type: integer
-        start_datetime:
-          type: string
-        is_completed:
-          type: boolean
-        created_at:
-          type: string
-        event_id:
+        title:
           type: string
         description:
           type: string
+        start_datetime:
+          type: string
         end_datetime:
-          type: string
-        updated_at:
-          type: string
+            type: string
+        is_completed:
+          type: boolean
         categories:
           type: array
           items:
@@ -167,24 +161,18 @@ components:
     Task:
       type: object
       properties:
-        due_at:
-          type: string
         id:
           type: integer
-        task_id:
+        title:
+          type: string
+        due_at:
           type: string
         completed_at:
-          type: string
-        created_at:
-          type: string
-        title:
           type: string
         is_completed:
           type: boolean
         is_hidden:
           type: boolean
-        updated_at:
-          type: string
         categories:
           type: array
           items:

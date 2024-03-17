@@ -13,10 +13,16 @@ from config import settings
 from contextlib import asynccontextmanager
 from models import EventsOrm, TasksOrm, CategoryOrm
 from sqlalchemy.orm import joinedload
+from sqlalchemy import insert
 from database import sessionmanager
 from dependecies.core import DBSessionDep
 import sys
 from utils.arguments import parse_arguments
+from schemas.Event import Event
+from schemas.Task import Task
+from schemas.Category import Category
+from jobs.sync_google_tasks_job import prepare_data as prepare_task
+from jobs.sync_google_events_job import prepare_data as prepare_event
 
 
 args = parse_arguments(sys.argv)
@@ -27,6 +33,9 @@ async def lifespan(app: FastAPI):
     Function that handles startup and shutdown events.
     To understand more, read https://fastapi.tiangolo.com/advanced/events/
     """
+    client_creds, user_creds = await google_service.authenticate()
+    settings.GOOGLE_CLIENT_CREDS.update(client_creds)
+    settings.GOOGLE_USER_CREDS.update(user_creds)
     yield
     if sessionmanager._engine is not None:
         # Close the DB connection
@@ -56,12 +65,6 @@ def create_fastapi_app():
         allow_origins=["*"],
     )
 
-    @app.on_event("startup")
-    async def startup_event(db_session: DBSessionDep):
-        client_creds, user_creds = await google_service.authenticate()
-        settings.GOOGLE_CLIENT_CREDS.update(client_creds)
-        settings.GOOGLE_USER_CREDS.update(user_creds)
-
     @app.get("/categories")
     async def get_categories(db_session: DBSessionDep):
         categories = await ASyncORM.query_items(
@@ -74,12 +77,12 @@ def create_fastapi_app():
         for c in categories:
             c.name = c.parent.name + '_' + c.name
 
-        categories_dto = [CategoryDTO.model_validate(row, from_attributes=True) for row in categories]
+        categories_dto = [Category.model_validate(row, from_attributes=True) for row in categories]
 
         return categories_dto
 
     @app.get("/events", tags=["Событии"])
-    async def get_events(db_session: DBSessionDep, start_date: str, end_date: Union[str, None] = None,
+    async def get_events(db_session: DBSessionDep, start_date: str, end_date: str,
                          is_completed: Union[str, None] = None,
                          category_ids: Union[str, None] = None):
         start_date, end_date = parse_date(start_date, end_date)
@@ -101,9 +104,11 @@ def create_fastapi_app():
             end_date_obj = parse(end_date).strftime("%Y-%m-%d")
             conditions.append(EventsOrm.end_datetime <= end_date_obj)
 
-        res = await ASyncORM.query_items(db_session, EventsOrm, conditions)
+        events = await ASyncORM.query_items(db_session, EventsOrm, conditions)
 
-        return res
+        events_dto = [Event.model_validate(row, from_attributes=True) for row in events]
+
+        return events_dto
 
     @app.post("/events", tags=["Событии"])
     async def create_event(db_session: DBSessionDep, category_id: int, start_date: str,
@@ -119,37 +124,32 @@ def create_fastapi_app():
 
         start_date, end_date = parse_date(start_date, end_date)
 
-        try:
-            res = await google_service.insert_event(**{
-                "summary": '[id=' + str(category.id) + ']: ' + parent_category.name + '_' + category.name,
-                "location": "",
-                "description": "",
-                "start": {
-                    'dateTime': start_date,
-                    'timeZone': settings.TIMEZONE,
-                },
-                "end": {
-                    "dateTime": end_date,
-                    "timeZone": settings.TIMEZONE,
-                },
-                "attendees": [],
-                "reminders": {
-                    "useDefault": False,
-                    "overrides": [
-                        {"method": "popup", "minutes": 10}
-                    ]
-                }
-            })
-
-            return res
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+        event = await google_service.insert_event(**{
+            "summary": '[id=' + str(category.id) + ']: ' + parent_category.name + '_' + category.name,
+            "location": "",
+            "description": "",
+            "start": {
+                'dateTime': start_date,
+                'timeZone': settings.TIMEZONE,
+            },
+            "end": {
+                "dateTime": end_date,
+                "timeZone": settings.TIMEZONE,
+            },
+            "attendees": [],
+            "reminders": {
+                "useDefault": False,
+                "overrides": [
+                    {"method": "popup", "minutes": 10}
+                ]
+            }
+        })
 
     @app.get("/tasks", tags=["Задачи"])
-    async def get_tasks(db_session: DBSessionDep, start_date: str, end_date: Union[str, None],
+    async def get_tasks(db_session: DBSessionDep, start_date: str, end_date: str,
                         is_completed: Union[str, None] = None,
                         category_ids: Union[str, None] = None):
-        start_date, end_date = parse_date(start_date)
+        start_date, end_date = parse_date(start_date, end_date)
 
         conditions = []
 
@@ -168,9 +168,11 @@ def create_fastapi_app():
             end_date_obj = parse(end_date).strftime("%Y-%m-%d")
             conditions.append(TasksOrm.due_at <= end_date_obj)
 
-        res = await ASyncORM.query_items(db_session, TasksOrm, conditions)
+        tasks = await ASyncORM.query_items(db_session, TasksOrm, conditions)
 
-        return res
+        tasks_dto = [Task.model_validate(row, from_attributes=True) for row in tasks]
+
+        return tasks_dto
 
     @app.post("/tasks", tags=["Задачи"])
     async def create_task(db_session: DBSessionDep, category_id: int, start_date: str):
@@ -185,16 +187,12 @@ def create_fastapi_app():
 
         start_date, end_date = parse_date(start_date)
 
-        try:
-            res = await google_service.insert_task(**{
-                "title": '[id=' + str(category.id) + ']: ' + parent_category.name + '_' + category.name,
-                "notes": "",
-                "due": start_date,
-            })
+        task = await google_service.insert_task(**{
+            "title": '[id=' + str(category.id) + ']: ' + parent_category.name + '_' + category.name,
+            "notes": "",
+            "due": start_date,
+        })
 
-            return res
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
 
     return app
 
