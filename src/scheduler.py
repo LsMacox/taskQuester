@@ -28,10 +28,8 @@ async def main():
             await get_tasks_job()
             raise SystemExit
 
-    schedule.every().day.at("12:00").do(get_events_job)
-    schedule.every().day.at("18:00").do(get_events_job)
-    schedule.every().day.at("12:00").do(get_tasks_job)
-    schedule.every().day.at("18:00").do(get_tasks_job)
+    schedule.every().hours.do(get_events_job())
+    schedule.every().hours.do(get_tasks_job())
 
     while True:
         await schedule.run_pending()
