@@ -122,10 +122,17 @@ def create_fastapi_app():
         category = categories[0]
         parent_category = category.parent
 
-        start_date, end_date = parse_date(start_date, end_date)
+        start_date, end_date = parse_date(start_date,
+                                          end_date)  # Убедитесь, что функция parse_date существует и корректно обрабатывает входные данные
+
+        # Формирование сводки события в зависимости от наличия parent_category
+        if parent_category:
+            summary = f'[id={category.id}]: {parent_category.name}_{category.name}'
+        else:
+            summary = f'[id={category.id}]: {category.name}'
 
         event = await google_service.insert_event(**{
-            "summary": '[id=' + str(category.id) + ']: ' + parent_category.name + '_' + category.name,
+            "summary": summary,
             "location": "",
             "description": "",
             "start": {
