@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
-from datetime import date
-from typing import Optional
+from datetime import date, datetime
+from typing import Optional, Union
 
 
 class Event(BaseModel):
@@ -9,6 +9,6 @@ class Event(BaseModel):
     id: Optional[int] = None
     title: str
     description: Optional[str] = None
-    start_datetime: date
-    end_datetime: Optional[date] = None
+    start_datetime: Union[Optional[datetime], Optional[date]] = None
+    end_datetime: Union[Optional[datetime], Optional[date]] = None
     is_completed: bool
