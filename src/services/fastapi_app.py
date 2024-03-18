@@ -187,8 +187,13 @@ def create_fastapi_app():
 
         start_date, end_date = parse_date(start_date)
 
+        if parent_category:
+            title = f'[id={category.id}]: {parent_category.name}_{category.name}'
+        else:
+            title = f'[id={category.id}]: {category.name}'
+
         task = await google_service.insert_task(**{
-            "title": '[id=' + str(category.id) + ']: ' + parent_category.name + '_' + category.name,
+            "title": title,
             "notes": "",
             "due": start_date,
         })
