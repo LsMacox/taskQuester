@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
-from datetime import date
-from typing import Optional
+from datetime import datetime, date
+from typing import Optional, Union
 
 
 class Task(BaseModel):
@@ -8,7 +8,7 @@ class Task(BaseModel):
 
     id: int
     title: str
-    due_at: Optional[date] = None
-    completed_at: Optional[date] = None
+    due_at: Union[Optional[datetime], Optional[date]] = None
+    completed_at: Union[Optional[datetime], Optional[date]] = None
     is_completed: bool
     is_hidden: bool
