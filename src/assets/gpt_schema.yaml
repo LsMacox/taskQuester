@@ -66,10 +66,13 @@ paths:
               properties:
                 category_id:
                   type: integer
+                  required: true
                 start_date:
                   type: string
+                  required: true
                 end_date:
                   type: string
+                  required: true
       responses:
         '201':
           description: Event created
@@ -120,8 +123,10 @@ paths:
               properties:
                 category_id:
                   type: integer
+                  required: true
                 start_date:
                   type: string
+                  required: true
       responses:
         '201':
           description: Task created

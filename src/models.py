@@ -51,6 +51,7 @@ class TasksOrm(Base):
     is_completed: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
     completed_at: Mapped[Optional[t_datetime]]
     is_hidden: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
+    is_deleted: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 
@@ -72,6 +73,7 @@ class EventsOrm(Base):
     start_datetime: Mapped[t_datetime]
     end_datetime: Mapped[Optional[t_datetime]]
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_deleted: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 

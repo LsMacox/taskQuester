@@ -23,9 +23,10 @@ from schemas.Task import Task
 from schemas.Category import Category
 from jobs.sync_google_tasks_job import prepare_data as prepare_task
 from jobs.sync_google_events_job import prepare_data as prepare_event
-
+from utils.sync_utils import upsertItemWithDependencies
 
 args = parse_arguments(sys.argv)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -87,7 +88,7 @@ def create_fastapi_app():
                          category_ids: Union[str, None] = None):
         start_date, end_date = parse_date(start_date, end_date)
 
-        conditions = []
+        conditions = [EventsOrm.is_deleted == False]
 
         if category_ids is not None:
             categories = category_ids.split(',')
@@ -111,8 +112,7 @@ def create_fastapi_app():
         return events_dto
 
     @app.post("/events", tags=["Событии"])
-    async def create_event(db_session: DBSessionDep, category_id: int, start_date: str,
-                           end_date: Union[str, None] = None):
+    async def create_event(db_session: DBSessionDep, category_id: int, start_date: str, end_date: str):
         categories = await ASyncORM.query_items(
             db_session,
             CategoryOrm,
@@ -122,10 +122,8 @@ def create_fastapi_app():
         category = categories[0]
         parent_category = category.parent
 
-        start_date, end_date = parse_date(start_date,
-                                          end_date)  # Убедитесь, что функция parse_date существует и корректно обрабатывает входные данные
+        start_date, end_date = parse_date(start_date, end_date)
 
-        # Формирование сводки события в зависимости от наличия parent_category
         if parent_category:
             summary = f'[id={category.id}]: {parent_category.name}_{category.name}'
         else:
@@ -152,13 +150,15 @@ def create_fastapi_app():
             }
         })
 
+        await upsertItemWithDependencies(db_session, EventsOrm, 'event_id', event, prepare_event)
+
     @app.get("/tasks", tags=["Задачи"])
     async def get_tasks(db_session: DBSessionDep, start_date: str, end_date: str,
                         is_completed: Union[str, None] = None,
                         category_ids: Union[str, None] = None):
         start_date, end_date = parse_date(start_date, end_date)
 
-        conditions = []
+        conditions = [TasksOrm.is_deleted == False]
 
         if category_ids is not None:
             categories = category_ids.split(',')
@@ -205,6 +205,7 @@ def create_fastapi_app():
             "due": start_date,
         })
 
+        await upsertItemWithDependencies(db_session, TasksOrm, 'task_id', task, prepare_task)
 
     return app
 

@@ -10,13 +10,12 @@ async def handle():
 
 
 def prepare_data(item):
-    print(item, isodate_to_timezone(item.get("completed")))
-
     return {
         'title': re.sub(ID_EXTRACT_PATTERN, '', item["title"]),
         'task_id': item["id"],
         'is_completed': item["status"] == 'completed',
         'completed_at': isodate_to_timezone(item.get("completed")),
         'is_hidden': item.get("hidden", False),
+        'is_deleted': item.get("deleted", False),
         'due_at': isodate_to_timezone(item["due"]),
     }

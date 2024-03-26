@@ -16,6 +16,7 @@ def prepare_data(item):
         'title': re.sub(ID_EXTRACT_PATTERN, '', item["summary"]),
         'event_id': item["id"],
         'is_completed': item["status"] == 'confirmed' or start_date > now,
+        'is_deleted': item["status"] == 'cancelled',
         'start_datetime': start_date,
         'end_datetime': isodate_to_timezone(item["end"]["dateTime"]),
     }
